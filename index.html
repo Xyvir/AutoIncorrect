@@ -209,23 +209,24 @@
         let textChangeMinuteSeed = null;
 
         function seededRandom(seed) {
-            let i = seed;
-            i = ((i >> 16) ^ i) * 0x45d9f3b;
-            i = ((i >> 16) ^ i) * 0x45d9f3b;
-            i = (i >> 16) ^ i;
-            let hashedSeed = i;
-            const a = 1664525;
-            const c = 1013904223;
-            const m = 2**32;
-            const pseudoRandom = (a * hashedSeed + c) % m;
-            return pseudoRandom / m;
+            let x = seed === 0 ? 1 : seed;
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            return (x + 2**31) / (2**32);
         }
 
         function updateWord() {
             const currentMinuteSeed = Math.floor(Date.now() / 60000);
             textChangeMinuteSeed = currentMinuteSeed;
+            
             const randomValue = seededRandom(currentMinuteSeed);
+
+            // --- DEBUGGING OUTPUT ---
+            console.log('Seeded Random Value:', randomValue);
+            
             const index = Math.floor(randomValue * words.length);
+            
             displayWord.textContent = words[index];
             newWordButton.textContent = 'Please Wait...';
         }
@@ -255,7 +256,7 @@
         newWordButton.addEventListener('click', updateWord);
 
         window.addEventListener('load', () => {
-            displayWord.textContent = '';
+            displayWord.textContent = '??????';
             updateTimer();
             setInterval(updateTimer, 100);
             setInterval(checkTextState, 1000);
