@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Word Generator</title>
+    <style>
+        /* Basic Reset and Body Styling */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* Word Display */
+        #displayWord {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            min-height: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            word-wrap: break-word;
+            padding: 10px 0;
+        }
+
+        /* Button Styling */
+        #newWordButton {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            width: 80%;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+        }
+
+        #newWordButton:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* Timer Bar Styling */
+        #timer-container {
+            width: 80%;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #28a745;
+            transition: width 0.1s linear;
+        }
+
+        /* Scratchpad Textarea */
+        #scratchpad {
+            width: calc(100% - 20px);
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            resize: none;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+
+        #scratchpad::placeholder {
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="displayWord"></div>
+        <button id="newWordButton">Refresh Word</button>
+        <div id="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+        <textarea id="scratchpad" placeholder="Your scratch notes go here..."
+                  autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    </div>
+
+    <script>
+        const words = [
+            "abandon", "ability", "able", "about", "above", "abroad", "absolute", "absolutely", "academic", "accept",
+            "acceptable", "access", "accident", "accompany", "according", "account", "accurate", "accuse", "achieve",
+            "achievement", "acknowledge", "acquire", "across", "action", "active", "activity", "actor", "actress",
+            "actual", "actually", "adapt", "addition", "additional", "address", "administration", "admire", "admit",
+            "adopt", "adult", "advance", "advanced", "advantage", "adventure", "advertise", "advertisement",
+            "advertising", "advice", "advise", "affair", "affect", "afford", "afraid", "after", "afternoon",
+            "afterward", "again", "against", "agency", "agenda", "agent", "aggressive", "agree", "agreement", "ahead",
+            "aircraft", "airline", "airport", "alarm", "album", "alcohol", "alcoholic", "alive", "allow", "almost",
+            "alone", "along", "already", "also", "alter", "alternative", "although", "always", "amazed", "amazing",
+            "ambition", "among", "amount", "analysis", "analyze", "ancient", "anger", "angle", "angry", "animal",
+            "ankle", "anniversary", "announce", "announcement", "annoy", "annoyed", "annoying", "annual", "another",
+            "answer", "anxious", "anybody", "anymore", "anyone", "anything", "anyway", "anywhere", "apart",
+            "apartment", "apologize", "apparent", "apparently", "appeal", "appear", "appearance", "apple",
+            "application", "apply", "appointment", "appreciate", "approach", "appropriate", "approval", "approve",
+            "approximately", "architect", "architecture", "area", "argue", "argument", "arise", "armed", "arms",
+            "army", "around", "arrange", "arrangement", "arrest", "arrival", "arrive", "article", "artificial",
+            "artist", "artistic", "ashamed", "aside", "asleep", "aspect", "assess", "assessment", "assignment",
+            "assist", "assistant", "associate", "associated", "association", "assume", "athlete", "atmosphere",
+            "attach", "attack", "attempt", "attend", "attention", "attitude", "attorney", "attract", "attraction",
+            "attractive", "audience", "aunt", "author", "authority", "automatic", "automatically", "available",
+            "average", "avoid", "award", "aware", "away", "awesome", "awful", "baby", "back", "background", "backward",
+            "bacteria", "badly", "bake", "balance", "ball", "banana", "band", "bank", "barrier", "base", "baseball",
+            "based", "basic", "basically", "basis", "basketball", "bath", "bathroom", "battery", "battle", "beach",
+            "bean", "bear", "beat", "beautiful", "beauty", "because", "become", "bedroom", "beef", "beer", "before",
+            "begin", "beginning", "behave", "behavior", "behind", "being", "belief", "believe", "bell", "belong",
+            "below", "belt", "bend", "benefit", "bent", "best", "better", "between", "beyond", "bicycle", "bike",
+            "bill", "billion", "biology", "bird", "birth", "birthday", "bite", "bitter", "black", "blame", "blank",
+            "blind", "block", "blog", "blond", "blood", "blow", "blue", "board", "boat", "body", "boil", "bomb",
+            "bond", "bone", "book", "boot", "border", "bored", "boring", "born", "borrow", "boss", "both", "bother",
+            "bottle", "bottom", "bowl", "boyfriend", "brain", "branch", "brand", "brave", "bread", "break",
+            "breakfast", "breast", "breath", "breathe", "breathing", "bride", "bridge", "brief", "bright", "brilliant",
+            "bring", "broad", "broadcast", "broken", "brother", "brown", "brush", "bubble", "budget", "build",
+            "building", "bullet", "bunch", "burn", "bury", "bush", "business", "businessman", "busy", "butter",
+            "button", "cable", "cafe", "cake", "calculate", "call", "calm", "camera", "camp", "campaign", "camping",
+            "campus", "cancel", "cancer", "candidate", "candy", "cannot", "capable", "capacity", "capital", "captain",
+            "capture", "card", "care", "career", "careful", "carefully", "careless", "carpet", "carrot", "carry",
+            "cartoon", "case", "cash", "cast", "catch", "category", "cause", "ceiling", "celebrate", "celebration",
+            "celebrity", "cell", "cent", "center", "central", "century", "ceremony", "certain", "certainly", "chain",
+            "chair", "chairman", "challenge", "champion", "chance", "change", "channel", "chapter", "character",
+            "characteristic", "charge", "charity", "chart", "chat", "cheap", "cheat", "check", "cheerful", "cheese",
+            "chef", "chemical", "chemistry", "chest", "chicken", "chief", "child", "childhood", "chip", "chocolate",
+            "choice", "choose", "church", "cigarette", "circle", "circumstance", "cite", "citizen", "city", "civil",
+            "claim", "class", "classic", "classical", "classroom", "clause", "clean", "clear", "clearly", "clerk",
+            "clever", "click", "client", "climate", "climb", "clock", "close", "closed", "closely", "closet", "cloth",
+            "clothes", "clothing", "cloud", "club", "clue", "coach", "coal", "coast", "coat", "code", "coffee", "coin",
+            "cold", "collapse", "colleague", "collect", "collection", "college", "color", "colored", "column",
+            "combination", "combine", "come", "comedy", "comfort", "comfortable", "command", "comment", "commercial",
+            "commission", "commit", "commitment", "committee", "common", "commonly", "communicate", "communication",
+            "community", "company", "compare", "comparison", "compete", "competition", "competitive", "competitor",
+            "complain", "complaint", "complete", "completely", "complex", "complicated", "component", "computer",
+            "concentrate", "concentration", "concept", "concern", "concerned", "concert", "conclude", "conclusion",
+            "condition", "conduct", "conference", "confidence", "confident", "confirm", "conflict", "confuse",
+            "confused", "confusing", "congress", "connect", "connected", "connection", "conscious", "consequence",
+            "conservative", "consider", "consideration", "consist", "consistent", "constant", "constantly",
+            "construct", "construction", "consume", "consumer", "contact", "contain", "container", "contemporary",
+            "content", "contest", "context", "continent", "continue", "continuous", "contract", "contrast",
+            "contribute", "contribution", "control", "convenient", "conversation", "convert", "convince", "convinced",
+            "cook", "cookie", "cooking", "cool", "copy", "core", "corn", "corner", "corporate", "correct",
+            "correctly", "cost", "costume", "cotton", "could", "council", "count", "country", "countryside", "county",
+            "couple", "courage", "course", "court", "cousin", "cover", "covered", "crash", "crazy", "cream", "create",
+            "creation", "creative", "creature", "credit", "crew", "crime", "criminal", "crisis", "criterion", "critic",
+            "critical", "criticism", "criticize", "crop", "cross", "crowd", "crowded", "crucial", "cruel", "cultural",
+            "culture", "cupboard", "cure", "curly", "currency", "current", "currently", "curtain", "curve", "curved",
+            "custom", "customer", "cycle", "daily", "damage", "dance", "dancer", "dancing", "danger", "dangerous",
+            "dark", "data", "date", "daughter", "dead", "deal", "dear", "death", "debate", "debt", "decade", "decent",
+            "decide", "decision", "declare", "decline", "decorate", "decoration", "decrease", "deep", "deeply",
+            "defeat", "defend", "defense", "define", "definite", "definitely", "definition", "degree", "delay",
+            "deliberate", "deliberately", "delicious", "deliver", "delivery", "demand", "demonstrate", "dentist",
+            "deny", "department", "departure", "depend", "depressed", "depressing", "depth", "describe", "description",
+            "desert", "deserve", "design", "designer", "desire", "desk", "desperate", "despite", "dessert",
+            "destination", "destroy", "detail", "detailed", "detect", "detective", "determine", "determined",
+            "develop", "development", "device", "diagram", "dialogue", "diamond", "diary", "dictionary", "diet",
+            "difference", "different", "differently", "difficult", "difficulty", "digital", "dinner", "direct",
+            "direction", "directly", "director", "dirt", "dirty", "disadvantage", "disagree", "disappear",
+            "disappointed", "disappointing", "disaster", "discipline", "discount", "discover", "discovery", "discuss",
+            "discussion", "disease", "dish", "dishonest", "disk", "dislike", "dismiss", "display", "distance",
+            "distribute", "distribution", "district", "divide", "division", "divorced", "doctor", "document",
+            "documentary", "dollar", "domestic", "dominate", "donate", "door", "double", "doubt", "down", "download",
+            "downstairs", "downtown", "downward", "dozen", "draft", "drag", "drama", "dramatic", "draw", "drawing",
+            "dream", "dress", "dressed", "drink", "drive", "driver", "driving", "drop", "drug", "drum", "drunk",
+            "during", "dust", "duty", "each", "early", "earn", "earth", "earthquake", "easily", "east", "eastern",
+            "easy", "economic", "economy"
+        ];
+
+        const newWordButton = document.getElementById('newWordButton');
+        const displayWord = document.getElementById('displayWord');
+        const timerBar = document.getElementById('timer-bar');
+        
+        let textChangeMinuteSeed = null;
+
+        function seededRandom(seed) {
+            let i = seed;
+            i = ((i >> 16) ^ i) * 0x45d9f3b;
+            i = ((i >> 16) ^ i) * 0x45d9f3b;
+            i = (i >> 16) ^ i;
+            let hashedSeed = i;
+            const a = 1664525;
+            const c = 1013904223;
+            const m = 2**32;
+            const pseudoRandom = (a * hashedSeed + c) % m;
+            return pseudoRandom / m;
+        }
+
+        function updateWord() {
+            const currentMinuteSeed = Math.floor(Date.now() / 60000);
+            textChangeMinuteSeed = currentMinuteSeed;
+            const randomValue = seededRandom(currentMinuteSeed);
+            const index = Math.floor(randomValue * words.length);
+            displayWord.textContent = words[index];
+            newWordButton.textContent = 'Please Wait...';
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const seconds = now.getSeconds();
+            const millis = now.getMilliseconds();
+            const totalSecondsElapsed = seconds + millis / 1000;
+            const percentage = ((60 - totalSecondsElapsed) / 60) * 100;
+            timerBar.style.width = `${percentage}%`;
+        }
+        
+        function checkTextState() {
+            if (textChangeMinuteSeed === null) {
+                return;
+            }
+            
+            const currentMinuteSeed = Math.floor(Date.now() / 60000);
+            
+            if (currentMinuteSeed > textChangeMinuteSeed) {
+                newWordButton.textContent = 'Refresh Word';
+                textChangeMinuteSeed = null;
+            }
+        }
+
+        newWordButton.addEventListener('click', updateWord);
+
+        window.addEventListener('load', () => {
+            displayWord.textContent = '';
+            updateTimer();
+            setInterval(updateTimer, 100);
+            setInterval(checkTextState, 1000);
+        });
+    </script>
+</body>
+</html>
