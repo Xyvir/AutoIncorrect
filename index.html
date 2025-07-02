@@ -86,6 +86,28 @@
             background-color: #28a745;
             transition: width 0.1s linear;
         }
+        
+        /* Score Counter Styling */
+        #score-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+        }
+        
+        .score-arrow {
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0 10px;
+            user-select: none; /* Prevents text selection on click */
+        }
+        
+        #score-value {
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
 
         /* Scratchpad Textarea */
         #scratchpad {
@@ -112,6 +134,14 @@
         <div id="timer-container">
             <div id="timer-bar"></div>
         </div>
+        
+        <div id="score-container">
+            <span class="score-arrow" id="score-down">▼</span>
+            <span id="score-value">0</span>
+            <span>&nbsp;Points</span>
+            <span class="score-arrow" id="score-up">▲</span>
+        </div>
+        
         <textarea id="scratchpad" placeholder="Your scratch notes go here..."
                   autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     </div>
@@ -254,62 +284,57 @@
             "your", "yours", "youth", "zero", "zone"
         ];
         
+        // --- DOM Element References ---
         const newWordButton = document.getElementById('newWordButton');
         const displayWord = document.getElementById('displayWord');
         const timerBar = document.getElementById('timer-bar');
+        const scoreUpButton = document.getElementById('score-up');
+        const scoreDownButton = document.getElementById('score-down');
+        const scoreValueDisplay = document.getElementById('score-value');
         
-        let textChangeMinuteSeed = null; // Stores the minute seed when the button is clicked.
-        let dailyWordList = [];
-        let currentDaySeed = null;
+        // --- State Variables ---
+        let textChangeMinuteSeed = null;
+        let score = 0;
 
-        /**
-         * Creates a stateful pseudo-random number generator (PRNG) using a seed.
-         */
-        function createPrng(seed) {
-            let x = seed === 0 ? 1 : seed;
-            return function() {
-                x ^= x << 13;
-                x ^= x >> 17;
-                x ^= x << 5;
-                return (x + 2**31) / (2**32);
+        // --- Cookie Helper Functions ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
             }
+            document.cookie = name + "=" + (value || "")  + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
         }
         
-        /**
-         * Creates a deterministic, shuffled list of words based on a daily seed.
-         */
-        function generateDailyWordList(daySeed) {
-            console.log("Generating new word list for the day...");
-            const prng = createPrng(daySeed);
-            let list = [...words];
-            for (let i = list.length - 1; i > 0; i--) {
-                const randomValue = prng();
-                const j = Math.floor(randomValue * (i + 1));
-                [list[i], list[j]] = [list[j], list[i]];
-            }
-            return list;
+        // --- Core Logic ---
+        function seededRandom(seed) {
+            let x = seed === 0 ? 1 : seed;
+            x ^= x << 13;
+            x ^= x >> 17;
+            x ^= x << 5;
+            return (x + 2**31) / (2**32);
         }
 
         function updateWord() {
-            // Check if we need to generate a new list for the day
-            const daySeed = Math.floor(Date.now() / 86400000);
-            if (daySeed !== currentDaySeed) {
-                dailyWordList = generateDailyWordList(daySeed);
-                currentDaySeed = daySeed;
-            }
-
-            const now = new Date();
-            // Get the minute of the day (0-1439)
-            const minuteOfTheDayIndex = now.getHours() * 60 + now.getMinutes();
+            const minuteSeed = Math.floor(Date.now() / 60000);
+            textChangeMinuteSeed = minuteSeed;
             
-            // Set the seed for the text change logic (using minutes since epoch for uniqueness)
-            textChangeMinuteSeed = Math.floor(Date.now() / 60000);
+            const randomValue = seededRandom(minuteSeed);
+            const index = Math.floor(randomValue * words.length);
             
-            // Wrap the index to fit within the bounds of our word list
-            const wrappedIndex = minuteOfTheDayIndex % dailyWordList.length;
-            
-            displayWord.textContent = dailyWordList[wrappedIndex] || 'Error';
-            
+            displayWord.textContent = words[index];
             newWordButton.textContent = 'Please Wait...';
         }
 
@@ -318,7 +343,6 @@
             const seconds = now.getSeconds();
             const millis = now.getMilliseconds();
             
-            // Timer is now a 60-second cycle
             const totalSecondsElapsed = seconds + (millis / 1000);
             const percentage = ((60 - totalSecondsElapsed) / 60) * 100;
             timerBar.style.width = `${percentage}%`;
@@ -329,7 +353,6 @@
                 return;
             }
             
-            // Check against the unique minute seed (minutes since epoch)
             const currentMinuteSeed = Math.floor(Date.now() / 60000);
             
             if (currentMinuteSeed > textChangeMinuteSeed) {
@@ -337,11 +360,36 @@
                 textChangeMinuteSeed = null;
             }
         }
-
+        
+        // --- Event Listeners ---
         newWordButton.addEventListener('click', updateWord);
+        
+        scoreUpButton.addEventListener('click', () => {
+            score++;
+            scoreValueDisplay.textContent = score;
+            setCookie('score', score, 365); // Save for 1 year
+        });
 
+        scoreDownButton.addEventListener('click', () => {
+            if (score > 0) {
+                score--;
+                scoreValueDisplay.textContent = score;
+                setCookie('score', score, 365);
+            }
+        });
+
+        // --- Initial Setup on Page Load ---
         window.addEventListener('load', () => {
             displayWord.textContent = '??????';
+            
+            // Load score from cookie
+            const savedScore = getCookie('score');
+            if (savedScore) {
+                score = parseInt(savedScore, 10);
+                scoreValueDisplay.textContent = score;
+            }
+            
+            // Start timers
             updateTimer();
             setInterval(updateTimer, 100);
             setInterval(checkTextState, 1000);
