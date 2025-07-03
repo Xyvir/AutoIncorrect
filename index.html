@@ -125,6 +125,24 @@
         #scratchpad::placeholder {
             color: #aaa;
         }
+        
+/* Styles for Mobile Devices */
+        @media (max-width: 600px) {
+            .container {
+                width: 95%; /* Use more of the screen width */
+                padding: 15px; /* Reduce the side padding */
+            }
+
+            #newWordButton,
+            #timer-container {
+                width: 90%; /* Make the button and timer bar wider */
+            }
+
+            #displayWord {
+                font-size: 2.2em; /* Slightly reduce font size for a better fit */
+            }
+        }
+
     </style>
 </head>
 <body>
