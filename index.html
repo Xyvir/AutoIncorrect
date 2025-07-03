@@ -86,7 +86,7 @@
             background-color: #28a745;
             transition: width 0.1s linear;
         }
-        
+
         /* Score Counter Styling */
         #score-container {
             display: flex;
@@ -367,7 +367,7 @@
         scoreUpButton.addEventListener('click', () => {
             score++;
             scoreValueDisplay.textContent = score;
-            setCookie('score', score, 365); // Save for 1 year
+            setCookie('score', score, 365);
         });
 
         scoreDownButton.addEventListener('click', () => {
@@ -382,14 +382,12 @@
         window.addEventListener('load', () => {
             displayWord.textContent = '??????';
             
-            // Load score from cookie
             const savedScore = getCookie('score');
             if (savedScore) {
                 score = parseInt(savedScore, 10);
                 scoreValueDisplay.textContent = score;
             }
             
-            // Start timers
             updateTimer();
             setInterval(updateTimer, 100);
             setInterval(checkTextState, 1000);
